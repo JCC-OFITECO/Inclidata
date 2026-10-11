@@ -70,7 +70,9 @@
       "PowerShell(Get-Content *)",
       "PowerShell($content = Get-Content \"C:\\\\_\\\\03_PYTHON\\\\GitHub\\\\IncliData\\\\venv\\\\Lib\\\\site-packages\\\\dash\\\\dcc\\\\async-slider.js\" -Raw; $m = [regex]::Matches\\($content, '.{0,60}typeof f.{0,60}'\\); $m | ForEach-Object { $_.Value } | Select-Object -First 5)",
       "Bash(git remote *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(git *)",
+      "Bash(codegraph init *)"
     ]
   }
 }

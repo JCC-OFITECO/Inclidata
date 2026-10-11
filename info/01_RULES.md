@@ -64,7 +64,7 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 
 [REGLA] **`sensor_id` canónico = `info.nom_sensor` del JSON del sensor; fallback al stem del nombre de archivo subido** (`graficar.py:357`). Se persiste en `info._sensor_id` del store y es el único valor válido para `context["sensor"]`.
 
-[REGLA] **Las claves reservadas de contexto** (`sensor`, `sensores`, `fecha_*`, `ultimas_camp`) viajan solo por el dict `context`. La sustitución `$CURRENT` en parámetros de plantilla resuelve desde `context["sensores_1"]`; las claves raíz del store no se pasan al motor directamente.
+[REGLA] **Las claves reservadas de contexto** (`sensor`, `sensores`, `fecha_*`, `ultimas_camp`) viajan solo por el dict `context`. La sustitución `$CURRENT` en parámetros de plantilla resuelve desde `context["sensor"]` vía `_CURRENT_TOKEN_MAP` (`html_engine.py:62`); `$CURRENT_fecha_*` y `$CURRENT_ultimas_camp` resuelven análogamente. Las claves raíz del store no se pasan al motor directamente. `context["sensores_1"]` es un mecanismo distinto: se usa en la iteración multi-sensor de tablas (`html_engine.py:1690`) y en `_normalize_context()` para inyectar el alias `nombre_sensor`; IncliData no lo establece en el contexto PDF (`graficar.py:2041-2048`).
 
 ---
 

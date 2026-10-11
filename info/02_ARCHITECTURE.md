@@ -81,7 +81,7 @@ Scripts Plotly para generación de gráficos en PDF. Convención: `generate(para
 ### `biblioteca_tablas/funciones/`
 Funciones de celda para tablas de tipo "autorrelleno" en plantillas. Convención: `evaluate(params, data, context) → float|str` + `CELL_FUNCTION_METADATA`. `cell_function_registry.py` hace scan dinámico.
 
-Incluye `columna_incli_json.py`: función especial que lee datos de sensor desde `json_inclis/{sensor}.json` con caché en memoria (`_json_cache`).
+Cinco funciones leen `json_inclis/{sensor}.json` directamente desde disco: `columna_incli_json` (con caché `_json_cache`), `ultima_lect_incli`, `penultima_lect_incli`, `antepenultima_lect_incli` y `nesima_lect_incli`. Todas definen `_JSON_INCLIS_DIR` apuntando a la carpeta `json_inclis/`.
 
 ### `biblioteca_plantillas/html/`
 Plantillas JSON creadas en Maketator. Una carpeta por plantilla: `{nombre}/{nombre}.json`. Los assets (imágenes) se gestionan vía `_assets/registry.json`.

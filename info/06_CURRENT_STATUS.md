@@ -70,6 +70,7 @@ Fuente: `CONTEXT.md`, `state.md`.
 | `CONTEXT_maketator_web.md` en el repo — describe arquitectura de Maketator Web; su presencia genera confusión | Baja |
 | `print()` residuales en páginas vivas — confirmados en `graficar.py:541` (fallback leyenda) | Baja |
 | Logs `[HTML][DBG]` y `[DEBUG-STATIC-FN]` del motor ruidosos en nivel `WARNING`; corrección se coordina con Maketator | Baja |
+| `sensor_id` sin sanitización de nombre de archivo: si `nom_sensor` contiene caracteres inválidos en rutas, la escritura de `json_inclis/{sensor_id}.json` falla en `graficar.py:400` sin validación previa. Además, si `nom_sensor` difiere del stem del archivo subido, el nombre del archivo en `data/` y `sensor_id` divergen (no rompe el render, que usa `json_inclis/`, pero viola la convención de 04 §1). | Baja |
 
 ---
 

@@ -44,13 +44,15 @@ El store `graficar-tubo` (`dcc.Store`) es la representación en memoria del sens
 
 | Clave | Tipo | Descripción |
 |---|---|---|
-| `info` | objeto | Metadatos del sensor (copiado de `data.info`). Contiene `_sensor_id` (stem del archivo JSON). |
+| `info` | objeto | Metadatos del sensor (copiado de `data.info`). Contiene `_sensor_id` (`info.nom_sensor` del JSON del sensor; si vacío, stem del archivo subido). |
 | `umbrales` | objeto | Umbrales del sensor. |
 | `<ISO 8601>` | objeto | Una por campaña activa (`active == True`). Contiene `campaign_info`, `info_readout`, `calc[]`. |
 
 **Invariante:** las claves raíz son **solo** timestamps ISO 8601 + `info` + `umbrales`. Nunca añadir metadatos en la raíz.
 
 **`info._sensor_id`:** valor `info.nom_sensor` del JSON del sensor; si está vacío, stem del nombre del archivo subido (`graficar.py:357`: `sensor_id = data.get("info",{}).get("nom_sensor") or Path(filename).stem`). Es la clave para localizar `json_inclis/{sensor_id}.json`.
+
+**Posible desajuste:** si `nom_sensor` difiere del stem del archivo subido, el nombre del archivo en `data/` y el `sensor_id` divergen. El motor no se ve afectado porque lee `json_inclis/{sensor_id}.json` (no `data/`). Sin embargo, `sensor_id` se usa tal cual como nombre de archivo sin sanitización: si `nom_sensor` contiene caracteres inválidos en rutas (p.ej. `/`, `:`, `*`), la escritura de `json_inclis/{sensor_id}.json` fallará en `graficar.py:400`.
 
 ---
 
@@ -160,4 +162,4 @@ Cada función de celda expone:
 | `CELL_FUNCTION_METADATA` | Dict con nombre, tipo de retorno y lista de parámetros |
 | `evaluate(params, data, context)` | Función principal: parámetros ya resueltos, `data={"historico":[...]}`, context del render |
 
-Las funciones no acceden a `json_inclis/` directamente; reciben los valores ya resueltos por el motor.
+Las funciones que trabajan con datos de sensor leen `json_inclis/` directamente: `columna_incli_json`, `ultima_lect_incli`, `penultima_lect_incli`, `antepenultima_lect_incli`, `nesima_lect_incli` (todas definen `_JSON_INCLIS_DIR` y leen `{sensor}.json` del disco). El motor les pasa los parámetros ya resueltos desde el contexto (`sensor`, `fecha`…) pero no les inyecta los datos; cada función hace su propia lectura. Las funciones que no trabajan con datos de sensor (p.ej. funciones de texto/formato) solo usan los `params` resueltos.

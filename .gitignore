@@ -34,5 +34,8 @@ prompt_temp/
 # Claude Code (session config, no pertenece al repo)
 .claude/settings.local.json
 
+# CodeGraph (índice local generado; no pertenece al repo)
+.codegraph/
+
 # Datos de sensor (no se versionan; usar json_inclis/.gitkeep para preservar la carpeta)
 json_inclis/*.json

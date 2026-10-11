@@ -5,6 +5,41 @@ Las plantillas de informe se diseñan en Maketator (editor eliminado de IncliDat
 
 ---
 
+📚 Documentación estructurada (info/)
+
+    info/00_PROJECT.md       Propósito, stack, subsistemas, glosario, papel Claude Web/Code/CodeGraph
+    info/01_RULES.md         Reglas técnicas etiquetadas [REGLA] / [CONVENCION] / [RESTRICCION-MODULO]
+    info/02_ARCHITECTURE.md  Estructura de carpetas, responsabilidades, flujos, puntos de extensión
+    info/03_BUSINESS_RULES.md Reglas funcionales del dominio (importación, corrección, umbrales, PDF)
+    info/04_DATA_MODEL.md    Modelos JSON (sensor, plantilla, store, contexto de render)
+    info/05_DECISIONS.md     Decisiones DEC-NNN con fuente verificable
+    info/06_CURRENT_STATUS.md Estado actual, backlog, discrepancias, deuda técnica
+
+    Contrato de integración con Maketator: _migracion/CONTRATO_motor_maketador.md
+
+---
+
+🔍 CodeGraph (antes de modificar código existente)
+
+    Usar CodeGraph ANTES de modificar código existente para:
+    - Localizar símbolos (dónde está definida una función, qué archivos la usan)
+    - Evaluar blast-radius (qué se rompe si cambio X)
+    - Ver fuente verbatim con números de línea sin abrir el archivo
+
+    MCP:   codegraph_explore (query + projectPath)
+    Shell: codegraph explore "<símbolo o pregunta>"
+
+    El índice vive en .codegraph/ (excluido del repo vía .gitignore).
+
+---
+
+🚫 Control de versiones
+
+    El usuario controla los commits y el push.
+    Claude Code NO hace commit sin instrucción explícita del usuario.
+
+---
+
 🛠 Comandos del Proyecto
 
     Iniciar App (estable):     python app.py

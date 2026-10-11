@@ -38,6 +38,16 @@ Las plantillas de informe se diseñan en Maketator (editor eliminado de IncliDat
     El usuario controla los commits y el push.
     Claude Code NO hace commit sin instrucción explícita del usuario.
 
+    Knowledge Base de Claude Web:
+    - El Project de Claude Web sincroniza desde GitHub exactamente 8 archivos: info/00_PROJECT.md
+      a info/06_CURRENT_STATUS.md y _migracion/CONTRATO_motor_maketador.md. La sincronización
+      es manual ("Sync now" del usuario).
+    - Al cerrar un sprint, actualiza info/06_CURRENT_STATUS.md (y info/05_DECISIONS.md si hubo
+      decisiones nuevas) y, si cambió alguno de esos 8 archivos, recuerda al usuario: commit,
+      push y "Sync now" en el Project.
+    - No crees documentos nuevos pensados para la KB ni propongas añadir archivos a ese conjunto
+      sin que lo decida el usuario.
+
 ---
 
 🛠 Comandos del Proyecto

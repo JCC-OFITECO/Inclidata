@@ -50,7 +50,7 @@ El store `graficar-tubo` (`dcc.Store`) es la representación en memoria del sens
 
 **Invariante:** las claves raíz son **solo** timestamps ISO 8601 + `info` + `umbrales`. Nunca añadir metadatos en la raíz.
 
-**`info._sensor_id`:** stem del nombre del archivo del sensor (ej. `"Rozmarin_IN_15"`). Es la clave para localizar `json_inclis/{sensor_id}.json`.
+**`info._sensor_id`:** valor `info.nom_sensor` del JSON del sensor; si está vacío, stem del nombre del archivo subido (`graficar.py:357`: `sensor_id = data.get("info",{}).get("nom_sensor") or Path(filename).stem`). Es la clave para localizar `json_inclis/{sensor_id}.json`.
 
 ---
 
@@ -114,6 +114,7 @@ El dict `context` es el puente entre la UI de Graficar y el motor HTML.
 | `fecha_inicial` | str | Inicio del rango temporal seleccionado. |
 | `fecha_final` | str | Fin del rango temporal seleccionado. |
 | `ultimas_camp` | int | Número de últimas campañas a incluir. |
+| `data` | objeto | Siempre `{}` en IncliData (`graficar.py:2047`). En Maketator el job runner lo rellena con datos históricos (`{historico: [...]}`) para cell functions que no usan `json_inclis/`. El motor lo lee en `html_engine.py:1568,3068,3218` pero al estar vacío no activa la rama de fetch (requeriría `server_id`). |
 
 Si alguna clave falta, el motor rellena con valores de `DUMMY_CONTEXT` (datos de maquetación).
 

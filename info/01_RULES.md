@@ -29,6 +29,21 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 
 [REGLA] La generación PDF de `pages/graficar.py` pasa siempre por `utils/report_engine.generate_report_pdf_from_state()`. No se llama a `pdf_generator.py` directamente. Fuente: commit `1b269f32`.
 
+[REGLA] **Dos funciones públicas en `report_engine.py`:** `generate_report_pdf(nombre_plantilla, context, output_path)` para plantillas en disco; `generate_report_pdf_from_state(editor_state, context, output_path)` para el estado en memoria del modal de Graficar. No llamar a `html_engine` directamente. Fuente: `utils/report_engine.py:79,104`.
+
+[REGLA] **Namespace de scripts:** el campo `script` en plantillas lleva prefijo `html/` (ej. `"html/grafico_inclinometro_v2.py"`). La resolución de rutas usa siempre `script_registry` o `Path("biblioteca_graficos") / nombre_canonico`. El patrón legacy `{carpeta}/{carpeta}.py` no es compatible con el motor HTML.
+
+[REGLA] **Las tablas Maketator** no llevan campo `script`: usan `grupo` + funciones de celda. La UI no debe construir ni exigir paths de script para elementos de tipo tabla.
+
+[REGLA] **Sin validación Pydantic en el circuito vivo.** `html_engine` recibe la plantilla como dict crudo. No existe `Plantilla.model_validate()` en el camino activo (está en `info/legacy/`). Los campos nuevos se definen en Maketator y viajan por JSON sin schema.
+
+[RESTRICCION-MODULO] **Mapa de minas del motor heredado** — plantillas de Maketator que usen estos tipos fallarán de forma predecible en IncliData (no son bugs a parchear localmente):
+- `tipo=sinoptico`: `_elem_sinoptico` requiere `context["_server"]` para etiquetas de sensor (IncliData nunca lo provee → degrada silenciosamente). Además `utils/sinoptico_componentes.py` no existe en IncliData → `ImportError` si la plantilla usa componentes SVG.
+- `tipo=mapa` (folium): `_elem_mapa_folium` degrada a placeholder si `folium`/`pyproj` no están instalados (no están en `requirements.txt` de IncliData).
+- Rama BD: cubierta por stubs de `models/`. IncliData nunca envía `context["server_id"]`.
+
+[REGLA] **Contrato de plantilla JSON:** el campo `secciones` viaja round-trip completo — no modificar su contenido. La geometría de todos los elementos se expresa en centímetros (`x`, `y`, `ancho`, `alto`). Fuente: `_migracion/CONTRATO_motor_maketador.md §2.1`, `04_DATA_MODEL.md §4`.
+
 ---
 
 ## Store `graficar-tubo`
@@ -37,6 +52,8 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 
 [REGLA] Cualquier metadato nuevo (sensor_id, nombre, etc.) va **dentro de `info{}`**, nunca como clave raíz. Fuente: commit `0e8e1251`.
 
+[REGLA] **El store es una proyección con pérdida del JSON original.** Descarta `abs_dev_a/b`, `dev_a/b`, `raw[]` y otros campos. Nunca usarlo como fuente de datos para el motor de render: el motor lee siempre de `json_inclis/{sensor_id}.json` (JSON completo).
+
 ---
 
 ## Puente json_inclis
@@ -44,6 +61,10 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 [REGLA] Al subir un archivo de sensor en Graficar, `pages/graficar.py` escribe el JSON completo en `json_inclis/{sensor_id}.json`. El motor HTML lo lee desde disco en tiempo de render. Fuente: `CLAUDE.md`, commit `1b269f32`.
 
 [RESTRICCION-MODULO] `json_inclis/` está excluido del reloader werkzeug (ver arranque dual). Los archivos `.json` se generan en runtime y no se versionan (`.gitignore: json_inclis/*.json`). Fuente: `CLAUDE.md`.
+
+[REGLA] **`sensor_id` canónico = `info.nom_sensor` del JSON del sensor; fallback al stem del nombre de archivo subido** (`graficar.py:357`). Se persiste en `info._sensor_id` del store y es el único valor válido para `context["sensor"]`.
+
+[REGLA] **Las claves reservadas de contexto** (`sensor`, `sensores`, `fecha_*`, `ultimas_camp`) viajan solo por el dict `context`. La sustitución `$CURRENT` en parámetros de plantilla resuelve desde `context["sensores_1"]`; las claves raíz del store no se pasan al motor directamente.
 
 ---
 
@@ -54,6 +75,8 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 [REGLA] **Dev**: `INCLIDATA_DEBUG=1 python app.py` → `debug=True, dev_tools_hot_reload=False, exclude_patterns=[...]`.
 
 [REGLA] `exclude_patterns` es obligatorio en modo dev. Sin él, el watcher de werkzeug reinicia el servidor cuando la app escribe `json_inclis/*.json` o `_assets/registry.json` durante un callback en vuelo, matando la petición. Fuente: `CLAUDE.md`, `CONTEXT.md §arranque dual`.
+
+[REGLA] **`exclude_patterns` es extensible.** Cualquier nueva escritura de archivo en runtime dentro del árbol del proyecto (logs, PDFs temporales, registros) debe añadirse a la lista en `app.py`. Lista actual: `json_inclis/*`, `*.log`, `*.pdf`, `registry.json`.
 
 ---
 
@@ -73,6 +96,16 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 
 [CONVENCION] **Componentes UI:** Dash 4.x + Dash Mantine Components v2 + Dash Bootstrap Components. Fuente: `CLAUDE.md`.
 
+[CONVENCION] **Paths y ficheros:** siempre `pathlib.Path`; `encoding="utf-8"` explícito en todos los `open()`.
+
+[CONVENCION] **`dcc.Store` en layouts de página, no en `app.py`.** Un store nuevo va en el layout de la página que lo usa. Patrón: `pages/graficar_layout.py:27`. Fuente: `CONTEXT.md §9`.
+
+[CONVENCION] **Configuración de logging:** handlers (consola + `debug_incli.log`) solo en el bloque `if __name__ == "__main__":` de `app.py`. No añadir `logging.basicConfig` ni `addHandler` a nivel de módulo. Las trazas `[PDF-TRACE]` del circuito PDF se emiten en nivel `DEBUG` y no se eliminan.
+
+[CONVENCION] **DMC v2 — no inventar props.** En caso de duda, introspección: `python -c "import inspect, dash_mantine_components as dmc; print(sorted(p.name for p in inspect.signature(dmc.Componente.__init__).parameters.values()))"`. `dmc.TransferList` no existe en DMC v2.
+
+[CONVENCION] **Mismo nombre ≠ mismo contrato.** Símbolos como `cargar_plantilla`, `generate_report_pdf_from_state` o `resolve_template` existen en Maketator con el mismo nombre pero firma y semántica distintas. Verificar retorno y efectos antes de asumir compatibilidad. Fuente: `CONTEXT_maketator_web.md §convenciones`.
+
 ---
 
 ## Assets de plantillas
@@ -84,3 +117,19 @@ Reglas etiquetadas: **[REGLA]** comportamiento obligatorio · **[CONVENCION]** e
 ## Control de versiones
 
 [REGLA] El usuario controla los commits y el push. Claude Code no hace commit sin instrucción explícita del usuario.
+
+---
+
+## Archivos protegidos
+
+[RESTRICCION-MODULO] **Intocables — coordinación con Maketator obligatoria** (parchear localmente crea divergencia silenciosa): `utils/script_registry.py`, `biblioteca_graficos/html/*`, `biblioteca_tablas/funciones/*`, `biblioteca_grupos/*`. Cualquier cambio se hace en Maketator y se re-trasplanta. Fuente: instrucciones asesor v1.0 §3.
+
+[RESTRICCION-MODULO] **`utils/template_service.py`** — contiene `cargar_plantilla` (retorno dict crudo, sin Pydantic) y `_encontrar_json_plantilla` (trasplantada de Maketator). Consumida directamente por `report_engine`. No modificar sin verificar contrato de retorno en Maketator.
+
+[RESTRICCION-MODULO] **`utils/asset_manager.py`** — par de `biblioteca_plantillas/_assets/registry.json`. No modificar uno sin el otro; toda escritura va por `asset_manager`.
+
+[RESTRICCION-MODULO] **`_migracion/CONTRATO_motor_maketador.md`** — documento normativo del contrato de integración. Modificar solo cuando el contrato real cambia en Maketator; documentar la versión del cambio.
+
+[REGLA] **`info/legacy/` no se reimporta en código vivo.** Es solo lectura histórica. Ningún módulo activo debe hacer `from info.legacy import ...` ni `import info.legacy`.
+
+[CONVENCION] **Archivos de alto impacto:** `pages/graficar.py`, `pages/graficar_layout.py` y `pages/correcciones.py` concentran el circuito PDF, el puente de datos `json_inclis` y las correcciones de sensor. Antes de modificar cualquiera de ellos, revisar blast-radius con CodeGraph.
